@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    {% comment %} Tags {% endcomment %}
+
+    <h1>Personas en la base de datos </h1>
+     
+    {% comment %} Verificar si el role es admin decir bienvenido administrador, si no lo es decir bienvenido usuario {% endcomment %}
+    
+    {% if role == "admin" %}
+        <h2>Bienvenido Administrador: {{ name|title }}</h2>
+    {% else %}
+        <h2>Bienvenido Usuario: {{name| title}}</h2>
+    {% endif %}
+    
+    {% comment %} Al hacer click se redirecciona a la informacion de la persona personal_information/<int:id> {% endcomment %}
+    <ul>
+        {% for persona in personas %}
+            <li> 
+                <a href="{% url 'personal_information' persona.id %}"> 
+                    Hola soy: {{ persona.name }}, mi apellido es: {{ persona.last_name }} y tengo {{ persona.age }} años 
+                </a> 
+            </li>
+            {% comment %} <li> Hola soy: {{ persona.name }}, mi apellido es: {{ persona.last_name }} y tengo {{ persona.age }} años </li> {% endcomment %}
+        {% endfor %}
+    </ul>
+
+</body>
+</html>
