@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     
     # apps
     'apps.Persona',
+    'apps.Library',
 ]
 
 MIDDLEWARE = [
