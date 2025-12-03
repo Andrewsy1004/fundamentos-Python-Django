@@ -13,3 +13,6 @@
 ## ORM (Objeto Relacional Mapper) Django
 1. python manage.py makemigrations "nombre de la app"    ( migraciones de la app )
 2. python manage.py migrate
+
+## Django Admin
+1. python manage.py createsuperuser

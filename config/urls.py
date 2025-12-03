@@ -23,3 +23,8 @@ urlpatterns = [
     path('persona/api/', include('apps.Persona.urls')),
     path('library/api/', include('apps.Library.urls')),
 ]
+
+
+# http://127.0.0.1:8000/library/api/create_author 
+
+# servidor/ applicacion / endpoint
