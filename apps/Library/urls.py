@@ -8,5 +8,14 @@ urlpatterns = [
     path('get_author_by_id/<int:id>', views.get_user_by_id, name='get_author_by_id'),
     
     path('delete_author/<int:id>', views.delete_autor_by_id, name='delete_author'),
-   
+    
+    path('update_author/<int:id>', views.update_author_by_id, name='update_author'),
+    
+    
+    # endponts de libros
+    path('create_book', views.create_book, name='create_book'),
+    
+    path('get_book_by_id/<int:id>', views.get_book_by_id, name='get_book_by_id'),
+    
+    
 ]
