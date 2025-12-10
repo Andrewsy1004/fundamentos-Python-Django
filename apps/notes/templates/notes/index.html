@@ -3,38 +3,237 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestion de Notas </title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Gestion de Notas</title>
 
-    <!-- Bootstrap  -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
- 
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
+  <style>
+    body { background: #f8f9fa; }
+    .card:hover { transform: translateY(-4px); transition: .15s ease-in-out; }
+    .card { cursor: pointer; }
+  </style>
 </head>
 <body>
-  
-      <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow">
-      <div class="container">
-          <a class="navbar-brand fw-bold" href="#">
-              <i class="fas fa-sticky-note me-2"></i> Gestion de Notas
-          </a>
-          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-              <span class="navbar-toggler-icon"></span>
-          </button>
-          <div class="collapse navbar-collapse" id="navbarNav">
-              <ul class="navbar-nav ms-auto">
-                  <li class="nav-item">
-                      <button class="btn btn-light fw-bold" data-bs-toggle="modal" data-bs-target="#createModal">
-                          <i class="fas fa-plus"></i> Nueva Nota
-                      </button>
-                  </li>
-              </ul>
-          </div>
+
+  <!-- Toasts -->
+  <div class="position-fixed top-0 end-0 p-3" style="z-index: 9999">
+    <div id="successToast" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="d-flex">
+        <div class="toast-body">
+          <i class="fas fa-check-circle me-2"></i><span id="toastMessage">Operación exitosa</span>
+        </div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
       </div>
+    </div>
+
+    <div id="errorToast" class="toast align-items-center text-white bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="d-flex">
+        <div class="toast-body">
+          <i class="fas fa-exclamation-circle me-2"></i><span id="errorMessage">Error en la operación</span>
+        </div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow">
+    <div class="container">
+      <a class="navbar-brand fw-bold" href="#">
+        <i class="fas fa-sticky-note me-2"></i> Gestion de Notas
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item">
+            <button class="btn btn-light fw-bold" data-bs-toggle="modal" data-bs-target="#createModal">
+              <i class="fas fa-plus"></i> Nueva Nota
+            </button>
+          </li>
+        </ul>
+      </div>
+    </div>
   </nav>
- 
+
+  <div class="container mt-4">
+    <div class="bg-white rounded-4 shadow-sm p-4 mb-4">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h2 class="fw-bold mb-0"><i class="fas fa-book-open text-primary me-2"></i>Mis Notas</h2>
+          <p class="text-muted mb-0 mt-2"><i class="fas fa-calendar-alt me-2"></i> {% now "d F Y" %} </p>
+        </div>
+        <span class="badge bg-primary fs-5">{{ notes.count }} Notas</span>
+      </div>
+    </div>
+
+    <div class="row g-4" id="notesGrid">
+      {% for note in notes %}
+      <div class="col-lg-4 col-md-6">
+        <div class="card h-100 shadow-sm border-1" onclick="fetchDetail('{{ note.id }}')">
+          <img src="{{ note.imagen }}" class="card-img-top" style="height:200px;object-fit:cover;" alt="Nota">
+          <div class="card-body">
+            <h5 class="card-title fw-bold">
+              <i class="fas fa-notes-medical text-primary me-2"></i>{{ note.nombre }}
+            </h5>
+            <p class="card-text text-muted">{{ note.descripcion|truncatechars:120 }}</p>
+            <div class="d-flex gap-2 flex-wrap">
+              <span class="badge {% if note.estado == 'completada' %}bg-success{% elif note.estado == 'en_proceso' %}bg-info{% else %}bg-warning text-dark{% endif %}">
+                {{ note.get_estado_display }}
+              </span>
+              <span class="badge {% if note.status %}bg-success{% else %}bg-secondary{% endif %}">{{ note.status|yesno:"Activo,Inactivo" }}</span>
+            </div>
+          </div>
+          <div class="card-footer bg-transparent border-top">
+            <small class="text-muted"><i class="far fa-clock me-1"></i> Hora de creación: {{ note.created_at|date:"d/m/Y H:i" }}</small>
+          </div>
+        </div>
+      </div>
+      {% empty %}
+      <p>No hay notas aún.</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Modal crear nota -->
+  <div class="modal fade" id="createModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header bg-success text-white">
+          <h5 class="modal-title fw-bold"><i class="fas fa-plus-circle me-2"></i>Nueva Nota</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label fw-bold">Título</label>
+            <input type="text" class="form-control" id="createNombre" placeholder="Ej: Implementar nueva funcionalidad" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Descripción</label>
+            <textarea class="form-control" id="createDescripcion" rows="4" placeholder="Describe tu nota en detalle..." required></textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">URL de Imagen (opcional)</label>
+            <input type="url" class="form-control" id="createImagen" placeholder="https://ejemplo.com/imagen.jpg">
+            <small class="text-muted">Pega el enlace de una imagen desde internet</small>
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label fw-bold">Estado</label>
+              <select class="form-select" id="createEstado">
+                <option value="pendiente">Pendiente</option>
+                <option value="en_proceso">En Proceso</option>
+                <option value="completada">Completada</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <!-- No data-bs-dismiss aquí: cerramos el modal solo si la petición fue exitosa -->
+          <button type="button" class="btn btn-success" onclick="createNote()"><i class="fas fa-save me-2"></i>Crear Nota</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    let createModalInstance = null;
+    let viewModalInstance = null;
+    let deleteModalInstance = null;
+
+    document.addEventListener('DOMContentLoaded', function() {
+
+      const createEl = document.getElementById('createModal');
+      if (createEl) createModalInstance = bootstrap.Modal.getOrCreateInstance(createEl);
+
+      const viewEl = document.getElementById('viewModal');
+      if (viewEl) viewModalInstance = bootstrap.Modal.getOrCreateInstance(viewEl);
+
+      const deleteEl = document.getElementById('deleteModal');
+      if (deleteEl) deleteModalInstance = bootstrap.Modal.getOrCreateInstance(deleteEl);
+
+
+      const successToastEl = document.getElementById('successToast');
+      const errorToastEl = document.getElementById('errorToast');
+
+
+      window._successToast = successToastEl ? new bootstrap.Toast(successToastEl) : null;
+      window._errorToast = errorToastEl ? new bootstrap.Toast(errorToastEl) : null;
+    });
+
+
+    function showToast(message, isError = false) {
+      if (isError) {
+        const errEl = document.getElementById('errorMessage');
+        if (errEl) errEl.innerText = message;
+        if (window._errorToast) window._errorToast.show();
+      } else {
+        const msgEl = document.getElementById('toastMessage');
+        if (msgEl) msgEl.innerText = message;
+        if (window._successToast) window._successToast.show();
+      }
+    }
+
+    async function createNote() {
+      const nombre      = document.getElementById('createNombre').value.trim();
+      const descripcion = document.getElementById('createDescripcion').value.trim();
+      const imagen      = document.getElementById('createImagen').value.trim();
+      const estado      = document.getElementById('createEstado').value;
+     
+      
+      if (!nombre || !descripcion || !estado  ) {
+        showToast('Por favor completa todos los campos requeridos', true);
+        return;
+      }
+
+      const payload = {
+        name: nombre,
+        description: descripcion,
+        image: imagen,
+        state: estado,
+      };
+
+      try {
+        const res = await fetch('/notes/api/create/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+          let errMsg = 'Error creando nota';
+          try {
+            const j = await res.json();
+            if (j && j.error) errMsg = j.error;
+          } catch(e) {}
+          throw new Error(errMsg);
+        }
+
+        const data = await res.json();
+        showToast('¡Nota creada exitosamente!');
+
+        const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('createModal'));
+        if (modal) modal.hide();
+
+        setTimeout(() => location.reload(), 700);
+      } catch (err) {
+        showToast(err.message || 'Error creando nota', true);
+      }
+    }
+  </script>
 
 </body>
 </html>
+
+

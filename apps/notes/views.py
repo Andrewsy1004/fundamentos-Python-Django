@@ -3,7 +3,7 @@
 from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseBadRequest
 
 import json,uuid
 
@@ -20,7 +20,7 @@ def execute_seed(request):
     Note.objects.all().delete()
     
     # Generate Seed
-    for i in range(100):
+    for i in range(10):
         notes.append(
             Note(
                 id = uuid.uuid4(),
@@ -46,4 +46,34 @@ def get_notes_list(request):
     notes = Note.objects.filter(status=True)
     
     return render(request, 'notes/index.html', {'notes': notes})
+
+
+
+@csrf_exempt
+def create_note(request):
+    try:
+        data = json.loads(request.body)
+        
+        # Validate data
+        required_fields = ['name', 'description', 'image', 'state']
+        
+        for field in required_fields:
+            if field not in data:
+                return JsonResponse({"error": f"Missing field: {field}"}, status=400)    
     
+        # Create Instance
+        note = Note(
+            id = uuid.uuid4(),
+            nombre = data.get('name'),
+            descripcion = data.get('description'),
+            imagen = data.get('image'),
+            estado = data.get('state'),
+        )
+        
+        # Save in the database
+        note.save()
+        
+        return JsonResponse({"message": "Note created successfully"}, status=201)
+    
+    except Exception as e:
+        return HttpResponseBadRequest({"error": str(e)})
